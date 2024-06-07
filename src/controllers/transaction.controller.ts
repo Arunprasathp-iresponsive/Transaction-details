@@ -1,7 +1,12 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Transaction, ITransaction } from '../models/Transaction';
+import { AppError } from '../utils/AppError';
 
-export const getAllTransactions = async (req: Request, res: Response) => {
+export const getAllTransactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const transactions: Partial<ITransaction>[] = await Transaction.find(
       { status: { $in: ['COMPLETED', 'IN PROGRESS', 'REJECTED'] } },
@@ -10,27 +15,31 @@ export const getAllTransactions = async (req: Request, res: Response) => {
 
     res.status(200).json(transactions);
   } catch (error) {
-    res.status(500).send(error);
+    next(new AppError('Failed to fetch transactions', 500));
   }
 };
 
-export const updateTransaction = async (req: Request, res: Response) => {
+export const updateTransaction = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     const { Comments } = req.body;
 
     const updatedTransaction = await Transaction.findOneAndUpdate(
-      { id }, 
+      { id },
       { Comments },
-      { new: true } // to return the updated document
+      { new: true } 
     );
 
     if (!updatedTransaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      return next(new AppError('Transaction not found', 404));
     }
 
     res.status(200).json({ ...updatedTransaction.toObject(), Comments });
   } catch (error) {
-    res.status(400).send(error);
+    next(new AppError('Failed to update transaction', 400));
   }
 };
