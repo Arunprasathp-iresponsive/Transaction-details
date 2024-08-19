@@ -43,3 +43,17 @@ export const updateTransaction = async (
     next(new AppError('Failed to update transaction', 400));
   }
 };
+
+export const insertTransactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+
+  for(let i=0; i< req.body.length; i++){
+    const document = new Transaction(req.body[i]);
+    const result = await document.save();
+  }
+  res.status(201).json({ message: 'Document inserted' });
+
+}
